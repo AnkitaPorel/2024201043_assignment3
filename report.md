@@ -78,6 +78,8 @@ This report details each method’s implementation, analyzes their performance, 
   - **No Optimization**: Lacks iterative refinement, limiting adaptability to dataset quirks.
 - **Analysis**: The low score reflects SVD’s struggle with a small corpus, where frequent but uninformative pairs dominate the matrix.
 
+![alt text](svd.png "SVD Cosine Plot")
+
 ### CBOW (Spearman: 0.202)
 - **Performance**: Moderate improvement over SVD, but still limited.
 - **Benefits**:
