@@ -1,7 +1,7 @@
 # Word Embedding Model Comparison: SVD, CBOW, and Skip-gram
 
 ## Introduction
-Word embeddings are vector representations of words that capture semantic and syntactic relationships, widely used in natural language processing (NLP). This report compares three embedding methods—Singular Value Decomposition (SVD) with PPMI, Continuous Bag of Words (CBOW), and Skip-gram—trained on the Brown Corpus and evaluated against human similarity judgments from the WordSim-353 dataset. The evaluation metric is Spearman rank correlation, which measures how well the cosine similarity between word vectors aligns with human-assigned similarity scores.
+Word embeddings are vector representations of words that capture semantic and syntactic relationships, widely used in natural language processing (NLP). This report compares three embedding methods—Singular Value Decomposition (SVD), Continuous Bag of Words (CBOW), and Skip-gram—trained on the Brown Corpus and evaluated against human similarity judgments from the WordSim-353 dataset. The evaluation metric is Spearman rank correlation, which measures how well the cosine similarity between word vectors aligns with human-assigned similarity scores.
 
 The results are as follows:
 - **SVD**: Spearman correlation = 0.127
@@ -20,12 +20,11 @@ This report details the methodology, implementation specifics from the provided 
 
 ### Models
 
-#### 1. SVD with PPMI (`svd_ppmi.py`)
-- **Approach**: Constructs a co-occurrence matrix, applies Positive Pointwise Mutual Information (PPMI) weighting, and uses SVD to reduce dimensionality.
+#### 1. SVD (`svd.py`)
+- **Approach**: Constructs a co-occurrence matrix and uses SVD to reduce dimensionality into word embeddings.
 - **Preprocessing**: Lowercases text, removes punctuation, and maps rare words (frequency < 2) to an `UNK` token.
-- **Co-occurrence Matrix**: Built with a window size of 5, counting word-context pairs within this range.
-- **PPMI**: Transforms co-occurrence counts into PPMI values to emphasize informative word relationships.
-- **Dimensionality Reduction**: SVD reduces the matrix to 100 dimensions, with embeddings normalized to unit length.
+- **Co-occurrence Matrix**: Built with a window size of 5, counting raw occurrences of word-context pairs within this range.
+- **Dimensionality Reduction**: SVD reduces the matrix to 150 dimensions, producing embeddings without additional normalization.
 - **Output**: Embeddings saved as `svd.pt` in a `{word: tensor}` dictionary.
 
 #### 2. CBOW (`cbow.py`)
@@ -53,10 +52,10 @@ This report details the methodology, implementation specifics from the provided 
 
 ## Implementation Details
 
-### SVD with PPMI
+### SVD
 - **Vocabulary**: Minimum frequency 2, resulting in a vocabulary size of ~15,000–20,000 words (exact size printed during execution).
-- **Matrix**: Sparse `lil_matrix` for efficiency, converted to COO format for PPMI computation.
-- **SVD**: Uses `scipy.sparse.linalg.svds` with `k=100`, producing 100-dimensional embeddings.
+- **Matrix**: Sparse `lil_matrix` for efficiency, capturing raw co-occurrence counts.
+- **SVD**: Uses `scipy.sparse.linalg.svds` with `k=150`, producing 150-dimensional embeddings.
 
 ### CBOW
 - **Vocabulary**: Minimum frequency 5, resulting in a smaller vocabulary (~10,000–15,000 words).
@@ -82,10 +81,10 @@ This report details the methodology, implementation specifics from the provided 
 #### 1. SVD (0.127)
 - **Performance**: The lowest correlation, indicating poor alignment with human judgments.
 - **Reasons**:
-  - **Small Corpus**: The Brown Corpus (~1M words) may not provide enough co-occurrence data for effective PPMI weighting and SVD.
-  - **Global Statistics**: SVD relies on a static co-occurrence matrix, capturing global patterns but potentially missing local context nuances.
-  - **Normalization**: Post-SVD normalization might distort relationships in a small dataset.
-- **Observation**: The low score suggests that SVD embeddings struggle to capture fine-grained semantic similarities in this setup.
+  - **Small Corpus**: The Brown Corpus (~1M words) provides limited co-occurrence data, leading to a sparse matrix with unreliable counts.
+  - **Raw Counts**: Using unweighted co-occurrence counts may overemphasize frequent but uninformative word pairs.
+  - **Global Approach**: SVD captures global patterns across the entire corpus, potentially missing local context nuances critical for similarity tasks.
+- **Observation**: The low score suggests that basic SVD struggles to generate meaningful embeddings from a small dataset without additional weighting or refinement.
 
 #### 2. CBOW (0.202)
 - **Performance**: Moderate improvement over SVD, but still relatively low.
@@ -110,22 +109,22 @@ This report details the methodology, implementation specifics from the provided 
   - Neural models (Skip-gram, CBOW) outperform the statistical SVD approach, likely due to iterative optimization capturing nuanced patterns.
   - Skip-gram’s focus on predicting context outperforms CBOW’s context-to-target prediction, consistent with prior research on smaller datasets.
 - **Corpus Size Impact**: The Brown Corpus’s limited size (~1M words) hampers all models, but Skip-gram adapts best, followed by CBOW, with SVD suffering most from sparse data.
-- **Dimensionality**: Skip-gram (100) and SVD (100) use lower dimensions than CBOW (300), suggesting that higher dimensionality doesn’t guarantee better performance with limited data.
+- **Dimensionality**: Skip-gram (100) and SVD (150) use lower-to-moderate dimensions compared to CBOW (300), suggesting that higher dimensionality doesn’t guarantee better performance with limited data.
 
 ---
 
 ## Discussion
 - **Skip-gram Success**: Its 0.387 correlation, while modest compared to modern embeddings (e.g., Word2Vec on larger corpora often exceeds 0.6), is respectable for the Brown Corpus. Subsampling and negative sampling optimize it for small datasets.
 - **CBOW Limitation**: The 0.202 score reflects CBOW’s reliance on broader context averaging, which may lose specificity in a small corpus.
-- **SVD Weakness**: The 0.127 score indicates that PPMI+SVD struggles with sparse, small-scale data, where co-occurrence counts are less reliable.
+- **SVD Weakness**: The 0.127 score indicates that basic SVD with raw co-occurrence counts struggles with sparse, small-scale data, where frequency patterns are less reliable.
 - **Improvement Opportunities**:
   - **Larger Corpus**: Training on a bigger dataset (e.g., Wikipedia) could boost all scores.
   - **Hyperparameter Tuning**: Adjusting window size, embedding dimension, or epochs might improve results.
-  - **Preprocessing**: Adding stopword removal or lemmatization could refine embeddings.
+  - **Preprocessing**: Adding stopword removal or lemmatization could refine embeddings, especially for SVD.
 
 ---
 
 ## Conclusion
-Skip-gram outperforms CBOW and SVD in this implementation, achieving a Spearman correlation of 0.387, followed by CBOW (0.202) and SVD (0.127). These results highlight Skip-gram’s robustness for smaller corpora, CBOW’s moderate capability, and SVD’s limitations with sparse data. For practical NLP tasks with the Brown Corpus, Skip-gram embeddings are recommended, though all models could benefit from a larger training corpus and further optimization.
+Skip-gram outperforms CBOW and SVD in this implementation, achieving a Spearman correlation of 0.387, followed by CBOW (0.202) and SVD (0.127). These results highlight Skip-gram’s robustness for smaller corpora, CBOW’s moderate capability, and SVD’s limitations with unweighted co-occurrence data. For practical NLP tasks with the Brown Corpus, Skip-gram embeddings are recommended, though all models could benefit from a larger training corpus and further optimization.
 
 ---
