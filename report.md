@@ -78,7 +78,7 @@ This report details each method’s implementation, analyzes their performance, 
   - **No Optimization**: Lacks iterative refinement, limiting adaptability to dataset quirks.
 - **Analysis**: The low score reflects SVD’s struggle with a small corpus, where frequent but uninformative pairs dominate the matrix.
 
-![alt text](svd.png)
+![alt text](svd.png){width=50%}
 
 ### CBOW (Spearman: 0.202)
 - **Performance**: Moderate improvement over SVD, but still limited.
@@ -92,7 +92,7 @@ This report details each method’s implementation, analyzes their performance, 
   - **Training Time**: 50 epochs may be insufficient or excessive, depending on convergence not fully optimized.
 - **Analysis**: CBOW’s moderate score suggests neural optimization helps, but its design is less effective on small datasets.
 
-![alt text](cbow.png)
+![alt text](cbow.png){width=50%}
 
 ### Skip-gram (Spearman: 0.387)
 - **Performance**: Highest correlation, significantly outperforming others.
@@ -106,7 +106,7 @@ This report details each method’s implementation, analyzes their performance, 
   - **Rare Words**: Subsampling may discard useful rare word contexts, though mitigated by `UNK`.
 - **Analysis**: The 0.387 score highlights Skip-gram’s strength in capturing local semantics, optimized by negative sampling and subsampling.
 
-![alt text](skipgram.png)
+![alt text](skipgram.png){width=50%}
 
 ### Comparative Analysis
 - **Ranking**: Skip-gram (0.387) > CBOW (0.202) > SVD (0.127).
