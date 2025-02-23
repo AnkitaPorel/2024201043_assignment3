@@ -8,6 +8,7 @@ This repository contains Python scripts to train word embeddings using different
 - [Installation](#installation)
 - [Scripts](#scripts)
 - [InstructionsToRun](#instructions)
+- [LinksToDownloadPretrainedModel](#links)
 
 ## Overview
 Word embeddings are dense vector representations of words that capture semantic relationships. This project implements three methods:
@@ -39,3 +40,7 @@ python3 <script-name.py>
 
 - To run wordsim.py-
 python3 wordsim.py <trained_model.pt>
+
+## Links
+Download the pretrained `.pt` files from the following links:
+- [INLP_3](https://drive.google.com/drive/folders/17s_IAANx46_Y-BDggRL5ILjaot68zqtw?usp=sharing)
