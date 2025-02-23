@@ -1,130 +1,166 @@
-# Word Embedding Model Comparison: SVD, CBOW, and Skip-gram
+# Performance Analysis of SVD, CBOW, and Skip-gram on the WordSim-353 Task
 
 ## Introduction
-Word embeddings are vector representations of words that capture semantic and syntactic relationships, widely used in natural language processing (NLP). This report compares three embedding methods—Singular Value Decomposition (SVD), Continuous Bag of Words (CBOW), and Skip-gram—trained on the Brown Corpus and evaluated against human similarity judgments from the WordSim-353 dataset. The evaluation metric is Spearman rank correlation, which measures how well the cosine similarity between word vectors aligns with human-assigned similarity scores.
+Word embeddings are critical in natural language processing (NLP) for representing words as dense vectors that capture semantic and syntactic relationships. This report compares three word embedding techniques—Singular Value Decomposition (SVD), Continuous Bag of Words (CBOW), and Skip-gram—trained on the Brown Corpus and evaluated on the WordSim-353 task. The evaluation metric is Spearman rank correlation, which assesses how well cosine similarities between word vectors align with human similarity judgments. The results are:
 
-The results are as follows:
 - **SVD**: Spearman correlation = 0.127
 - **CBOW**: Spearman correlation = 0.202
 - **Skip-gram**: Spearman correlation = 0.387
 
-This report details the methodology, implementation specifics from the provided scripts, and an analysis of these results.
+This report details each method’s implementation, analyzes their performance, discusses benefits and limitations, and supports findings with tables and conceptual plots.
 
 ---
 
 ## Methodology
 
 ### Dataset
-- **Training Corpus**: The Brown Corpus (~1 million words) from NLTK, containing diverse English texts.
-- **Evaluation Dataset**: WordSim-353 (`wordsim353crowd.csv`), a set of 353 word pairs with human-assigned similarity scores (0–10).
+- **Training Corpus**: Brown Corpus (~1 million words) from NLTK, a diverse collection of English texts.
+- **Evaluation Dataset**: WordSim-353 (`wordsim353crowd.csv`), 353 word pairs with human similarity scores (0–10).
 
-### Models
+### Models and Implementation
 
 #### 1. SVD (`svd.py`)
-- **Approach**: Constructs a co-occurrence matrix and uses SVD to reduce dimensionality into word embeddings.
-- **Preprocessing**: Lowercases text, removes punctuation, and maps rare words (frequency < 2) to an `UNK` token.
-- **Co-occurrence Matrix**: Built with a window size of 5, counting raw occurrences of word-context pairs within this range.
-- **Dimensionality Reduction**: SVD reduces the matrix to 150 dimensions, producing embeddings without additional normalization.
-- **Output**: Embeddings saved as `svd.pt` in a `{word: tensor}` dictionary.
+- **Approach**: Constructs a co-occurrence matrix from raw counts and applies SVD for dimensionality reduction.
+- **Preprocessing**: Lowercases text, removes punctuation, maps words with frequency < 2 to `UNK`.
+- **Parameters**: Window size = 5, embedding dimension = 150.
+- **Process**: Builds a sparse co-occurrence matrix and uses `scipy.sparse.linalg.svds` to generate embeddings.
+- **Output**: Embeddings saved as `svd.pt`.
 
 #### 2. CBOW (`cbow.py`)
-- **Approach**: A neural network model predicting a target word from its context words, trained with cross-entropy loss.
-- **Preprocessing**: Lowercases text and removes punctuation (stopwords not removed in this implementation).
-- **Training Data**: Context-target pairs with a window size of 5, padded with `UNK` if context is smaller than expected.
-- **Model**: Embedding layer (300 dimensions) followed by a linear layer, averaging context embeddings to predict the target word.
-- **Training**: 50 epochs, batch size 512, learning rate 0.0005, Adam optimizer, on CPU or GPU if available.
+- **Approach**: Neural network predicting a target word from its context, trained with cross-entropy loss.
+- **Preprocessing**: Lowercases text, removes punctuation (no stopword removal).
+- **Parameters**: Window size = 5, embedding dimension = 300, 50 epochs, batch size = 512, learning rate = 0.0005.
+- **Process**: Averages context embeddings via an embedding layer and linear layer, optimized with Adam.
 - **Output**: Embeddings saved as `cbow.pt`.
 
 #### 3. Skip-gram (`skipgram.py`)
-- **Approach**: A neural network model predicting context words from a target word, using negative sampling to optimize efficiency.
-- **Preprocessing**: Lowercases text, removes punctuation (stopwords removal commented out), and applies subsampling to frequent words.
-- **Training Data**: Target-context pairs with a window size of 5, subsampled based on word frequency.
-- **Model**: Two embedding layers (target and context, 100 dimensions), trained with negative sampling (5 negative samples per positive).
-- **Training**: 15 epochs, batch size 512, learning rate 0.001, Adam optimizer, on CPU or GPU if available.
+- **Approach**: Neural network predicting context words from a target word, using negative sampling.
+- **Preprocessing**: Lowercases text, removes punctuation, applies subsampling (stopword removal commented out).
+- **Parameters**: Window size = 5, embedding dimension = 100, 15 epochs, batch size = 512, learning rate = 0.001, 5 negative samples.
+- **Process**: Uses two embedding layers, optimized with Adam and negative sampling.
 - **Output**: Embeddings saved as `skipgram.pt`.
 
 ### Evaluation (`wordsim.py`)
-- **Method**: Loads embeddings, computes cosine similarity for WordSim-353 word pairs, and calculates Spearman correlation with human scores.
-- **Normalization**: Human scores normalized to [0, 1] (divided by 10) for plotting.
-- **Output**: Spearman correlation, CSV file (`word_similarity.csv`), and scatter plot (`word_similarity_plot.png`).
-
----
-
-## Implementation Details
-
-### SVD
-- **Vocabulary**: Minimum frequency 2, resulting in a vocabulary size of ~15,000–20,000 words (exact size printed during execution).
-- **Matrix**: Sparse `lil_matrix` for efficiency, capturing raw co-occurrence counts.
-- **SVD**: Uses `scipy.sparse.linalg.svds` with `k=150`, producing 150-dimensional embeddings.
-
-### CBOW
-- **Vocabulary**: Minimum frequency 5, resulting in a smaller vocabulary (~10,000–15,000 words).
-- **Training Data**: Fixed context size (10 words, padded with `UNK`), leading to ~500,000–600,000 training samples.
-- **Model**: Simple architecture with higher dimensionality (300) to capture more semantic nuance.
-
-### Skip-gram
-- **Vocabulary**: Minimum frequency 5, similar to CBOW.
-- **Training Data**: Variable context size (up to 10 words), subsampling reduces sample count (~300,000–400,000 pairs).
-- **Negative Sampling**: Noise distribution based on unigram frequency raised to 0.75, enhancing training efficiency.
+- **Method**: Computes cosine similarity for WordSim-353 pairs, correlates with human scores using Spearman rank.
+- **Output**: Spearman correlation, `word_similarity.csv`, and `word_similarity_plot.png`.
 
 ---
 
 ## Results
 
 ### Spearman Correlation Scores
-- **SVD**: 0.127
-- **CBOW**: 0.202
-- **Skip-gram**: 0.387
+| Model      | Spearman Correlation |
+|------------|---------------------|
+| SVD        | 0.127               |
+| CBOW       | 0.202               |
+| Skip-gram  | 0.387               |
 
-### Analysis
+### Implementation Summary
+| Model      | Embedding Dim | Window Size | Epochs | Batch Size | Learning Rate | Key Features            |
+|------------|---------------|-------------|--------|------------|----------------|-------------------------|
+| SVD        | 150           | 5           | N/A    | N/A        | N/A            | Raw co-occurrence, SVD  |
+| CBOW       | 300           | 5           | 50     | 512        | 0.0005         | Context averaging       |
+| Skip-gram  | 100           | 5           | 15     | 512        | 0.001          | Negative sampling, subsampling |
 
-#### 1. SVD (0.127)
-- **Performance**: The lowest correlation, indicating poor alignment with human judgments.
-- **Reasons**:
-  - **Small Corpus**: The Brown Corpus (~1M words) provides limited co-occurrence data, leading to a sparse matrix with unreliable counts.
-  - **Raw Counts**: Using unweighted co-occurrence counts may overemphasize frequent but uninformative word pairs.
-  - **Global Approach**: SVD captures global patterns across the entire corpus, potentially missing local context nuances critical for similarity tasks.
-- **Observation**: The low score suggests that basic SVD struggles to generate meaningful embeddings from a small dataset without additional weighting or refinement.
+---
 
-#### 2. CBOW (0.202)
-- **Performance**: Moderate improvement over SVD, but still relatively low.
-- **Reasons**:
-  - **Context Averaging**: CBOW averages context embeddings, which may dilute specific word relationships, especially with a small corpus and large window (5).
-  - **Higher Dimensionality**: 300 dimensions might overfit or fail to generalize well with limited data.
-  - **Training**: 50 epochs may not suffice for optimal convergence on a small dataset.
-- **Observation**: CBOW captures some semantic structure better than SVD, likely due to its neural optimization, but its performance remains limited.
+## Analysis
 
-#### 3. Skip-gram (0.387)
-- **Performance**: The highest correlation, significantly outperforming SVD and CBOW.
-- **Reasons**:
-  - **Local Context**: Skip-gram predicts context from target words, excelling at capturing local syntactic and semantic relationships.
-  - **Subsampling**: Reduces noise from frequent words, improving embedding quality.
-  - **Negative Sampling**: Efficiently contrasts positive and negative contexts, enhancing discriminative power.
-  - **Fewer Epochs**: 15 epochs with a lower learning rate (0.001) suggest effective optimization without overfitting.
-- **Observation**: Skip-gram’s superior performance aligns with its known strength in smaller corpora and its focus on individual word-context relationships.
+### SVD (Spearman: 0.127)
+- **Performance**: Lowest correlation, indicating poor alignment with human similarity judgments.
+- **Benefits**:
+  - **Simplicity**: Requires no iterative training, relying on linear algebra for a one-shot computation.
+  - **Interpretability**: Captures global co-occurrence patterns, useful for understanding corpus-wide statistics.
+  - **Efficiency**: Fast on small datasets once the matrix is built, with no need for GPU resources.
+- **Limitations**:
+  - **Sparse Data**: The Brown Corpus (~1M words) yields a sparse matrix, reducing the reliability of raw counts.
+  - **Global Focus**: Misses local context nuances critical for similarity tasks, as it aggregates all co-occurrences.
+  - **No Optimization**: Lacks iterative refinement, limiting adaptability to dataset quirks.
+- **Analysis**: The low score reflects SVD’s struggle with a small corpus, where frequent but uninformative pairs dominate the matrix.
+
+### CBOW (Spearman: 0.202)
+- **Performance**: Moderate improvement over SVD, but still limited.
+- **Benefits**:
+  - **Neural Learning**: Iterative optimization captures semantic relationships better than static methods.
+  - **Context Awareness**: Uses surrounding words to inform embeddings, improving over global counts.
+  - **Scalability**: Can leverage larger datasets and GPU acceleration (if available).
+- **Limitations**:
+  - **Context Averaging**: Averaging context embeddings dilutes specific relationships, especially with a large window (5) on sparse data.
+  - **Overfitting Risk**: 300 dimensions may overfit the small Brown Corpus, capturing noise rather than general patterns.
+  - **Training Time**: 50 epochs may be insufficient or excessive, depending on convergence not fully optimized.
+- **Analysis**: CBOW’s moderate score suggests neural optimization helps, but its design is less effective on small datasets.
+
+### Skip-gram (Spearman: 0.387)
+- **Performance**: Highest correlation, significantly outperforming others.
+- **Benefits**:
+  - **Local Precision**: Predicts context from targets, excelling at fine-grained relationships.
+  - **Efficiency**: Negative sampling (5 samples) and subsampling reduce computational load while enhancing quality.
+  - **Robustness**: Adapts well to small datasets, as seen in its strong performance on Brown Corpus.
+- **Limitations**:
+  - **Complexity**: Requires careful tuning (e.g., learning rate, epochs) and GPU support for larger datasets.
+  - **Training Time**: Iterative training is slower than SVD, though mitigated by fewer epochs (15).
+  - **Rare Words**: Subsampling may discard useful rare word contexts, though mitigated by `UNK`.
+- **Analysis**: The 0.387 score highlights Skip-gram’s strength in capturing local semantics, optimized by negative sampling and subsampling.
 
 ### Comparative Analysis
 - **Ranking**: Skip-gram (0.387) > CBOW (0.202) > SVD (0.127).
-- **Trends**:
-  - Neural models (Skip-gram, CBOW) outperform the statistical SVD approach, likely due to iterative optimization capturing nuanced patterns.
-  - Skip-gram’s focus on predicting context outperforms CBOW’s context-to-target prediction, consistent with prior research on smaller datasets.
-- **Corpus Size Impact**: The Brown Corpus’s limited size (~1M words) hampers all models, but Skip-gram adapts best, followed by CBOW, with SVD suffering most from sparse data.
-- **Dimensionality**: Skip-gram (100) and SVD (150) use lower-to-moderate dimensions compared to CBOW (300), suggesting that higher dimensionality doesn’t guarantee better performance with limited data.
+- **Neural vs. Statistical**: Neural models (Skip-gram, CBOW) outperform SVD, leveraging iterative learning over static counts.
+- **Context Handling**: Skip-gram’s target-to-context prediction outshines CBOW’s averaging, especially on small data.
+- **Corpus Impact**: The Brown Corpus’s size limits all models, but Skip-gram’s adaptability shines through.
+
+---
+
+## Visualization
+
+### Conceptual Plot Description
+A scatter plot (as generated by `wordsim.py`) for each model would show:
+- **X-axis**: Normalized human similarity scores (0–1, original scores / 10).
+- **Y-axis**: Model cosine similarity (-1 to 1).
+- **Points**: WordSim-353 word pairs, annotated (e.g., “car-automobile”).
+- **Trend**: 
+  - **SVD**: Scattered points with weak correlation (0.127), showing little alignment with human scores.
+  - **CBOW**: Slightly tighter clustering along the diagonal (0.202), indicating moderate alignment.
+  - **Skip-gram**: Stronger diagonal trend (0.387), with points closer to a linear relationship.
+
+**Figure 1**: Scatter plots of cosine similarity vs. human similarity for SVD, CBOW, and Skip-gram, with Spearman correlations annotated (0.127, 0.202, 0.387).
+
+### Table of Key Metrics
+| Model      | Spearman Correlation | Vocabulary Size (Approx.) | Training Time (Relative) |
+|------------|---------------------|---------------------------|--------------------------|
+| SVD        | 0.127               | 15,000–20,000             | Low (one-shot)           |
+| CBOW       | 0.202               | 10,000–15,000             | High (50 epochs)         |
+| Skip-gram  | 0.387               | 10,000–15,000             | Medium (15 epochs)       |
+
+*Note*: Vocabulary sizes are estimated based on `min_freq` (2 for SVD, 5 for CBOW/Skip-gram) and Brown Corpus word counts.
 
 ---
 
 ## Discussion
-- **Skip-gram Success**: Its 0.387 correlation, while modest compared to modern embeddings (e.g., Word2Vec on larger corpora often exceeds 0.6), is respectable for the Brown Corpus. Subsampling and negative sampling optimize it for small datasets.
-- **CBOW Limitation**: The 0.202 score reflects CBOW’s reliance on broader context averaging, which may lose specificity in a small corpus.
-- **SVD Weakness**: The 0.127 score indicates that basic SVD with raw co-occurrence counts struggles with sparse, small-scale data, where frequency patterns are less reliable.
-- **Improvement Opportunities**:
-  - **Larger Corpus**: Training on a bigger dataset (e.g., Wikipedia) could boost all scores.
-  - **Hyperparameter Tuning**: Adjusting window size, embedding dimension, or epochs might improve results.
-  - **Preprocessing**: Adding stopword removal or lemmatization could refine embeddings, especially for SVD.
+
+### Benefits and Limitations Summary
+- **SVD**:
+  - **Benefit**: Simple, fast, and interpretable for small-scale analysis.
+  - **Limitation**: Poor on small, sparse datasets; lacks local context capture.
+- **CBOW**:
+  - **Benefit**: Neural approach scales with data, leverages context effectively.
+  - **Limitation**: Context averaging and high dimensionality limit performance on small corpora.
+- **Skip-gram**:
+  - **Benefit**: Precise, robust to small datasets, optimized by negative sampling.
+  - **Limitation**: Complex tuning and slower training on large scales.
+
+### Performance Insights
+- **Skip-gram’s Lead**: Its 0.387 score, though below modern benchmarks (e.g., Word2Vec > 0.6), is strong for Brown Corpus, reflecting its local focus and optimization.
+- **CBOW’s Middle Ground**: 0.202 shows neural benefits over SVD, but averaging hampers specificity.
+- **SVD’s Struggle**: 0.127 underscores limitations of raw counts on small data, where statistical power is low.
+
+### Improvement Suggestions
+- **Larger Corpus**: Training on Wikipedia or similar (~billions of words) could push correlations above 0.5.
+- **Hyperparameter Tuning**: Experiment with window size (e.g., 2–10), dimensions (50–500), or epochs.
+- **Preprocessing**: Add stopword removal or lemmatization to refine embeddings, especially for SVD.
 
 ---
 
 ## Conclusion
-Skip-gram outperforms CBOW and SVD in this implementation, achieving a Spearman correlation of 0.387, followed by CBOW (0.202) and SVD (0.127). These results highlight Skip-gram’s robustness for smaller corpora, CBOW’s moderate capability, and SVD’s limitations with unweighted co-occurrence data. For practical NLP tasks with the Brown Corpus, Skip-gram embeddings are recommended, though all models could benefit from a larger training corpus and further optimization.
+Skip-gram outperforms CBOW and SVD on the WordSim-353 task with a Spearman correlation of 0.387, followed by CBOW (0.202) and SVD (0.127). Skip-gram’s local context precision and optimization techniques make it ideal for small datasets like Brown Corpus, while CBOW offers moderate gains through neural learning, and SVD lags due to its static, global approach. For practical NLP with limited data, Skip-gram is recommended, though all methods could improve with larger corpora and refined parameters.
 
 ---
