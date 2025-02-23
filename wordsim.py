@@ -157,7 +157,7 @@ def plot_similarity(human_scores, model_scores, word_pairs, correlation_val):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python3 wordsim.py <xyz.pt>")
+        print("Usage: python3 wordsim.py <trained_model.pt>")
         sys.exit(0)
 
     wordsim_path = 'wordsim353crowd.csv'
@@ -167,7 +167,7 @@ def main():
         embeddings = torch.load(embedding_path)
         correlation_val, human_scores, model_scores, word_pairs = evaluate_word_similarity(embeddings, wordsim_path)
         print(f"Spearman Correlation: {correlation_val}")
-        if human_scores:  # Only plot if we have data
+        if human_scores:
             plot_similarity(human_scores, model_scores, word_pairs, correlation_val)
             save_to_csv(word_pairs, human_scores, model_scores, 'word_similarity.csv')
     except FileNotFoundError:

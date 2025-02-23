@@ -7,14 +7,7 @@ This repository contains Python scripts to train word embeddings using different
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Scripts](#scripts)
-  - [SVD-based PPMI Embeddings](#svd-based-ppmi-embeddings)
-  - [Evaluation Script](#evaluation-script)
-  - [Skip-gram Model](#skip-gram-model)
-  - [CBOW Model](#cbow-model)
-- [Usage](#usage)
-- [Output](#output)
-- [Notes](#notes)
-- [License](#license)
+- [InstructionsToRun](#instructions)
 
 ## Overview
 Word embeddings are dense vector representations of words that capture semantic relationships. This project implements three methods:
@@ -25,7 +18,7 @@ Word embeddings are dense vector representations of words that capture semantic 
 The evaluation script (`wordsim.py`) compares these embeddings against human similarity scores from WordSim-353, computing Spearman correlation and visualizing the results.
 
 ## Requirements
-- Python 3.1+
+- Python 3.7+
 - Libraries:
   - `numpy`
   - `torch`
@@ -39,3 +32,10 @@ The evaluation script (`wordsim.py`) compares these embeddings against human sim
    ```bash
    git clone <repository-url>
    cd <repository-directory>
+
+## Instructions
+- To run any of the svd.py, cbow.py, skipgram.py-
+python3 <script-name.py>
+
+- To run wordsim.py-
+python3 wordsim.py <trained_model.pt>
